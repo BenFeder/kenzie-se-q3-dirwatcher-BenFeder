@@ -18,6 +18,24 @@ def watch_directory(path, magic_string, extension, interval):
     return
 
 
+def scan_single_file():
+    """
+    Use to check indivdual file if it has been added or new lines
+    have been added to the file
+    """
+    pass
+
+
+def detect_added_files():
+    """See if there are new files to scan"""
+    pass
+
+
+def detect_removed_files():
+    """See if any files have been deleted"""
+    pass
+
+
 def create_parser():
     # Your code here
     return
