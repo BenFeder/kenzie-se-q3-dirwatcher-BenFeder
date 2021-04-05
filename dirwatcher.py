@@ -3,7 +3,7 @@
 Dirwatcher - A long-running program
 """
 
-__author__ = "???"
+__author__ = "Benjamin Feder"
 
 import sys
 
