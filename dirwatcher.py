@@ -51,7 +51,8 @@ def signal_handler(sig_num, frame):
     """
     global exit_flag
     # log the associated signal name
-    logger.warning('Received ' + signal.Signals(sig_num).name)
+    logger.warning(
+        f"{datetime.datetime.now()}: Received {signal.Signals(sig_num).name}")
     exit_flag = True
 
 
@@ -62,7 +63,7 @@ def search_for_magic(filename, start_line, magic_string):
             start_line += 1
             if magic_string in line:
                 logger.info(
-                    f"""{magic_string} was found in {filename} at line
+                    f"""{datetime.datetime.now()}: {magic_string} was found in {filename} at line
                 {start_line}.""")
             files_dict[filename.split("/")[-1]] = start_line
 
@@ -124,20 +125,22 @@ def main(args):
     while not exit_flag:
         try:
             if not ns.dir:
-                logger.error("No directory given to watch.")
+                logger.error(
+                    f"{datetime.datetime.now()}: No directory given to watch.")
             else:
                 watch_directory(f"{ns.dir}/", ns.magic, ns.ext, int(ns.int))
         except Exception as e:
             # This is an UNHANDLED exception
             # Log an ERROR level message here
-            logger.error(e)
+            logger.error(f"{datetime.datetime.now()}: {e})
 
         # put a sleep inside my while loop so I don't peg the cpu usage at 100%
         time.sleep(int(ns.int))
 
     end_time = datetime.datetime.now()
     duration = end_time - start_time
-    logger.info(f"Process took duration: {duration}")
+    logger.info(
+        f"{datetime.datetime.now()}: Process took duration: {duration}")
 
     # final exit point happens here
     # Log a message that we are shutting down
