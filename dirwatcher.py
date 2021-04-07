@@ -132,7 +132,7 @@ def main(args):
         except Exception as e:
             # This is an UNHANDLED exception
             # Log an ERROR level message here
-            logger.error(f"{datetime.datetime.now()}: {e})
+            logger.error(f"{datetime.datetime.now()}: {e}")
 
         # put a sleep inside my while loop so I don't peg the cpu usage at 100%
         time.sleep(int(ns.int))
