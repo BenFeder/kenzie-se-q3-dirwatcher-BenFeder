@@ -31,7 +31,11 @@ stream_handler = logging.StreamHandler()
 logger.addHandler(file_handler)
 logger.addHandler(stream_handler)
 
-
+"""
+Create empty files dictionary to create key/value pairs
+of what line was left off at (value = start_line)
+for each file (key)
+"""
 files_dict = {}
 
 
@@ -45,38 +49,33 @@ def signal_handler(sig_num, frame):
     :param frame: Not used
     :return None
     """
+    global exit_flag
     # log the associated signal name
     logger.warning('Received ' + signal.Signals(sig_num).name)
     exit_flag = True
-    end_time = datetime.datetime.now()
-    duration = start_time - end_time
-    logger.info(f"Process took duration: {duration}")
 
 
 def search_for_magic(filename, start_line, magic_string):
     """Search for the magic string in the file"""
-    if not files_dict[filename]:
-        start_line = 0
-    else:
-        start_line = files_dict[filename]
     with open(filename, "r") as f:
-        for i, line in enumerate(f):
-            if i >= start_line:
-                read = line.read()
-                start_line += 1
-                if magic_string in read:
-                    logger.info(
-                        f"""{magic_string} was found in {filename} at line
-                    {start_line}.""")
-                files_dict[filename] = start_line
+        for line in f.readlines()[start_line:]:
+            start_line += 1
+            if magic_string in line:
+                logger.info(
+                    f"""{magic_string} was found in {filename} at line
+                {start_line}.""")
+            files_dict[filename.split("/")[-1]] = start_line
 
 
 def watch_directory(path, magic_string, extension, interval):
     """Watch directory by looking at all files in directory for magic string"""
     for filename in os.listdir(path):
         if filename.endswith(extension):
-            search_for_magic(filename, files_dict[filename], magic_string)
-    time.sleep(interval)
+            if filename not in files_dict:
+                start_line = 0
+            else:
+                start_line = files_dict[filename]
+            search_for_magic(f"{path}{filename}", start_line, magic_string)
 
 
 # def scan_single_file():
@@ -112,8 +111,7 @@ def create_parser():
 
 
 def main(args):
-
-"""Create a namespace from create parser, then watch directory"""
+    """Create a namespace from create parser, then watch directory"""
     ns = create_parser()
 
     # Hook into these two signals from the OS
@@ -122,20 +120,24 @@ def main(args):
     signal.signal(signal.SIGHUP, signal_handler)
     # Now my signal_handler will get called if OS sends
     # either of these to my process.
+    start_time = datetime.datetime.now()
     while not exit_flag:
-        start_time = datetime.datetime.now()
-       try:
+        try:
             if not ns.dir:
                 logger.error("No directory given to watch.")
             else:
-                watch_directory(f"{ns.dir}/", ns.magic, ns.ext, ns.int)
+                watch_directory(f"{ns.dir}/", ns.magic, ns.ext, int(ns.int))
         except Exception as e:
             # This is an UNHANDLED exception
             # Log an ERROR level message here
             logger.error(e)
 
         # put a sleep inside my while loop so I don't peg the cpu usage at 100%
-        time.sleep(ns.int)
+        time.sleep(int(ns.int))
+
+    end_time = datetime.datetime.now()
+    duration = end_time - start_time
+    logger.info(f"Process took duration: {duration}")
 
     # final exit point happens here
     # Log a message that we are shutting down
