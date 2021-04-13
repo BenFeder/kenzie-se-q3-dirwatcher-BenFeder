@@ -28,9 +28,6 @@ logger.setLevel(logging.INFO)
 file_handler = logging.FileHandler('dirwatcher.log')
 stream_handler = logging.StreamHandler()
 
-logger.addHandler(file_handler)
-logger.addHandler(stream_handler)
-
 """
 Create empty files dictionary to create key/value pairs
 of what line was left off at (value = start_line)
@@ -68,41 +65,38 @@ def search_for_magic(filename, start_line, magic_string):
             files_dict[filename.split("/")[-1]] = start_line
 
 
-def watch_directory(path, magic_string, extension, interval):
+def watch_directory(path, magic_string, extension):
     """Watch directory by looking at all files in directory for magic string"""
     for filename in os.listdir(path):
         if filename.endswith(extension):
             if filename not in files_dict:
-                start_line = 0
-            else:
-                start_line = files_dict[filename]
-            search_for_magic(f"{path}{filename}", start_line, magic_string)
+                files_dict[filename] = 0
+                logger.info(f"File named {filename} was created.")
+            search_for_magic(f"{path}{filename}",
+                             files_dict[filename], magic_string)
+    check_removed(path)
 
 
-# def scan_single_file():
-#     """
-#     Use to check indivdual file if it has been added or new lines
-#     have been added to the file
-#     """
-#     pass
+def check_removed(path):
+    file_list = []
 
+    for filename in files_dict:
+        if filename not in os.listdir(path):
+            file_list.append(filename)
 
-# def detect_added_files():
-#     """See if there are new files to scan"""
-#     pass
-
-
-# def detect_removed_files():
-#     """See if any files have been deleted"""
-#     pass
+    for filename in file_list:
+        del files_dict[filename]
+        logger.info(f"File {filename} was deleted.")
 
 
 def create_parser():
     """Create arg parser"""
     parser = argparse.ArgumentParser()
-    parser.add_argument('--dir', help="Monitors given directory named")
-    parser.add_argument('--ext', help="Searches files with given extension")
-    parser.add_argument('--int', help="Searches dir every given interval")
+    parser.add_argument('--ext', default=".txt",
+                        help="Searches files with given extension")
+    parser.add_argument('--int', default=1,
+                        help="Searches dir every given interval")
+    parser.add_argument('dir', help="Monitors given directory named")
     parser.add_argument('magic', help="""Must input a string to search
     for in files under given directory""")
 
@@ -122,13 +116,14 @@ def main(args):
     # Now my signal_handler will get called if OS sends
     # either of these to my process.
     start_time = datetime.datetime.now()
+    logger.info(f"Current start time to process is: {start_time}")
     while not exit_flag:
         try:
             if not ns.dir:
                 logger.error(
                     f"{datetime.datetime.now()}: No directory given to watch.")
             else:
-                watch_directory(f"{ns.dir}/", ns.magic, ns.ext, int(ns.int))
+                watch_directory(f"{ns.dir}/", ns.magic, ns.ext)
         except Exception as e:
             # This is an UNHANDLED exception
             # Log an ERROR level message here
